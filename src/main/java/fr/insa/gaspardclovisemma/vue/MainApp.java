@@ -1,8 +1,7 @@
 package fr.insa.gaspardclovisemma.vue;
 
 import fr.insa.gaspardclovisemma.materiaux.Revetement;
-import fr.insa.gaspardclovisemma.modele.Coin;
-import fr.insa.gaspardclovisemma.modele.Mur;
+import fr.insa.gaspardclovisemma.modele.*;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -18,110 +17,135 @@ import java.util.List;
 
 public class MainApp extends Application {
 
-    private List<Mur> listeMurs = new ArrayList<>();
+    // Notre base de données en mémoire
+    private List<Mur> tousLesMurs = new ArrayList<>();
     private List<Revetement> catalogue = new ArrayList<>();
-    private double totalDevis = 0;
     
-    private final double ECHELLE = 40.0; // 1 mètre = 40 pixels
+    // Éléments visuels
+    private final double ECHELLE = 40.0;
     private Canvas canvasPlan;
+    private TextArea zoneDevis;
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle("EstimaBat - Gaspard, Clovis, Emma");
+        stage.setTitle("EstimaBat - Gestionnaire de Bâtiment (Étape 2)");
 
-        // --- 1. CHARGEMENT DU CATALOGUE INSA ---
-        catalogue.add(new Revetement("Vinyle Lino", 15.50));
-        catalogue.add(new Revetement("Moquette", 12.00));
-        catalogue.add(new Revetement("Papier Peint", 18.00));
-        catalogue.add(new Revetement("Peinture", 20.00));
-        catalogue.add(new Revetement("Peinture+", 28.00));
-        catalogue.add(new Revetement("Peinture+++", 40.00));
-        catalogue.add(new Revetement("Crepis", 45.00));
-        catalogue.add(new Revetement("Parquet", 55.00));
-        catalogue.add(new Revetement("Plaquettes de parement", 65.00));
-        catalogue.add(new Revetement("Marbre", 120.00));
+        // 1. CHARGEMENT DU CATALOGUE
+        initialiserCatalogue();
 
-        // --- 2. MENU DE GAUCHE (CONTRÔLES) ---
-        VBox menu = new VBox(10);
-        menu.setPadding(new Insets(15));
-        menu.setPrefWidth(280);
-        menu.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6;");
+        // 2. FORMULAIRE DE SAISIE (GAUCHE)
+        VBox formulaire = new VBox(10);
+        formulaire.setPadding(new Insets(15));
+        formulaire.setPrefWidth(320);
+        formulaire.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6;");
 
-        Label titreSaisie = new Label("1. Tracer un Mur");
-        titreSaisie.setStyle("-fx-font-weight: bold;");
+        Label lblTitre = new Label("Saisie des éléments du bâtiment");
+        lblTitre.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
 
-        // Champs pour les coordonnées
+        // Champs de hiérarchie (Bâtiment > Niveau > Appartement > Pièce)
+        TextField txtNiveau = new TextField("0"); txtNiveau.setPromptText("Ex: 0 (RDC)");
+        TextField txtAppart = new TextField("1"); txtAppart.setPromptText("ID Appartement");
+        TextField txtPiece = new TextField("1"); txtPiece.setPromptText("ID Pièce");
+        
+        GridPane gridHierarchie = new GridPane();
+        gridHierarchie.setHgap(10); gridHierarchie.setVgap(10);
+        gridHierarchie.addRow(0, new Label("Niveau :"), txtNiveau, new Label("Appart. :"), txtAppart);
+        gridHierarchie.addRow(1, new Label("Pièce :"), txtPiece);
+
+        // Champs du Mur
+        Label lblMur = new Label("Coordonnées du mur (en mètres)");
+        lblMur.setStyle("-fx-font-weight: bold;");
+        
         HBox coord1 = new HBox(5, new Label("X1:"), new TextField("0"), new Label("Y1:"), new TextField("0"));
         HBox coord2 = new HBox(5, new Label("X2:"), new TextField("5"), new Label("Y2:"), new TextField("0"));
-        
-        Label titreMateriau = new Label("2. Choisir le revêtement");
-        titreMateriau.setStyle("-fx-font-weight: bold;");
-        
+
         ComboBox<String> comboRevetement = new ComboBox<>();
         catalogue.forEach(r -> comboRevetement.getItems().add(r.getNom()));
         comboRevetement.getSelectionModel().selectFirst();
         comboRevetement.setMaxWidth(Double.MAX_VALUE);
 
-        Button btnTracer = new Button("Tracer et Ajouter au Devis");
-        btnTracer.setStyle("-fx-background-color: #005088; -fx-text-fill: white;");
-        btnTracer.setMaxWidth(Double.MAX_VALUE);
+        Button btnAjouter = new Button("Ajouter cet élément au projet");
+        btnAjouter.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;");
+        btnAjouter.setMaxWidth(Double.MAX_VALUE);
 
-        // Zone de reçu (Devis)
-        TextArea recap = new TextArea();
-        recap.setEditable(false);
-        Label totalLabel = new Label("TOTAL : 0.00 €");
-        totalLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #b30000;");
+        // Zone d'action (Devis)
+        Button btnCalculerDevis = new Button("Générer le Devis Total");
+        btnCalculerDevis.setMaxWidth(Double.MAX_VALUE);
+        
+        zoneDevis = new TextArea();
+        zoneDevis.setEditable(false);
+        zoneDevis.setPrefHeight(200);
 
-        menu.getChildren().addAll(
-            titreSaisie, coord1, coord2, 
-            new Separator(), titreMateriau, comboRevetement, 
-            btnTracer, 
-            new Separator(), recap, totalLabel
+        formulaire.getChildren().addAll(
+            lblTitre, new Separator(),
+            new Label("1. Emplacement :"), gridHierarchie,
+            new Separator(),
+            new Label("2. Structure :"), lblMur, coord1, coord2,
+            new Label("Revêtement :"), comboRevetement,
+            btnAjouter,
+            new Separator(),
+            btnCalculerDevis, zoneDevis
         );
 
-        // --- 3. ZONE DE DESSIN (CENTRE) ---
+        // 3. ZONE DE VISUALISATION (CENTRE)
+        VBox zoneCentrale = new VBox(10);
+        zoneCentrale.setPadding(new Insets(10));
+        Label lblPlan = new Label("Visualisation du Plan 2D (Vue passive)");
+        lblPlan.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
+        
         canvasPlan = new Canvas(600, 500);
         GraphicsContext gc = canvasPlan.getGraphicsContext2D();
         initialiserGrille(gc);
+        zoneCentrale.getChildren().addAll(lblPlan, canvasPlan);
 
-        // --- 4. LE CERVEAU DU BOUTON ---
-        btnTracer.setOnAction(e -> {
+        // 4. LOGIQUE DES BOUTONS
+        btnAjouter.setOnAction(e -> {
             try {
-                // On récupère les champs de texte dans les HBox
                 double x1 = Double.parseDouble(((TextField)coord1.getChildren().get(1)).getText().replace(",", "."));
                 double y1 = Double.parseDouble(((TextField)coord1.getChildren().get(3)).getText().replace(",", "."));
                 double x2 = Double.parseDouble(((TextField)coord2.getChildren().get(1)).getText().replace(",", "."));
                 double y2 = Double.parseDouble(((TextField)coord2.getChildren().get(3)).getText().replace(",", "."));
 
-                // A. On crée le mur et on le dessine
                 Mur nouveauMur = new Mur(new Coin(x1, y1), new Coin(x2, y2));
-                listeMurs.add(nouveauMur);
+                Revetement rev = catalogue.get(comboRevetement.getSelectionModel().getSelectedIndex());
+                nouveauMur.setRevetement(rev); // Assure-toi d'avoir un "setRevetement" dans ta classe Mur
+                
+                tousLesMurs.add(nouveauMur);
+                
+                // On met à jour l'affichage passif
                 dessinerPlan(gc);
-
-                // B. On calcule le prix
-                double hauteurSousPlafond = 2.50; // Hauteur standard pour commencer
-                double surfaceMur = nouveauMur.calculerSurface(hauteurSousPlafond);
-                Revetement sel = catalogue.get(comboRevetement.getSelectionModel().getSelectedIndex());
                 
-                double cout = surfaceMur * sel.getPrixM2();
-                totalDevis += cout;
+                // Petit retour visuel
+                Alert ok = new Alert(Alert.AlertType.INFORMATION, "Mur ajouté avec succès au Niveau " + txtNiveau.getText());
+                ok.setHeaderText(null);
+                ok.show();
 
-                // C. On met à jour la facture
-                recap.appendText(String.format("Mur (%.1fm) - %s : %.2f €\n", nouveauMur.getLongueur(), sel.getNom(), cout));
-                totalLabel.setText(String.format("TOTAL : %.2f €", totalDevis));
-                
-            } catch (NumberFormatException ex) {
-                Alert alerte = new Alert(Alert.AlertType.ERROR, "Veuillez entrer uniquement des chiffres (ex: 5.5).");
-                alerte.showAndWait();
+            } catch (Exception ex) {
+                new Alert(Alert.AlertType.ERROR, "Erreur dans la saisie des coordonnées.").showAndWait();
             }
         });
 
-        BorderPane layout = new BorderPane();
-        layout.setLeft(menu);
-        layout.setCenter(canvasPlan);
+        btnCalculerDevis.setOnAction(e -> {
+            // Utilise la classe CalculateurDevis que nous avons créée précédemment
+            String facture = CalculateurDevis.genererFactureDetaillee(tousLesMurs, 2.50);
+            zoneDevis.setText(facture);
+        });
 
-        stage.setScene(new Scene(layout, 900, 550));
+        BorderPane layout = new BorderPane();
+        layout.setLeft(formulaire);
+        layout.setCenter(zoneCentrale);
+
+        stage.setScene(new Scene(layout, 1000, 650));
         stage.show();
+    }
+
+    private void initialiserCatalogue() {
+        catalogue.add(new Revetement("Vinyle Lino", 15.50));
+        catalogue.add(new Revetement("Moquette", 12.00));
+        catalogue.add(new Revetement("Papier Peint", 18.00));
+        catalogue.add(new Revetement("Peinture", 20.00));
+        catalogue.add(new Revetement("Crepis", 45.00));
+        catalogue.add(new Revetement("Parquet", 55.00));
     }
 
     private void initialiserGrille(GraphicsContext gc) {
@@ -134,10 +158,10 @@ public class MainApp extends Application {
     private void dessinerPlan(GraphicsContext gc) {
         gc.clearRect(0, 0, 600, 500);
         initialiserGrille(gc);
-        gc.setStroke(Color.BLACK);
+        gc.setStroke(Color.DARKSLATEGRAY);
         gc.setLineWidth(4);
 
-        for (Mur m : listeMurs) {
+        for (Mur m : tousLesMurs) {
             double x1 = m.getDebut().getX() * ECHELLE + 50;
             double y1 = m.getDebut().getY() * ECHELLE + 50;
             double x2 = m.getFin().getX() * ECHELLE + 50;
