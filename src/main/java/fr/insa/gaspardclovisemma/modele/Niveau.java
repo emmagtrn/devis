@@ -6,23 +6,16 @@ import java.util.List;
 public class Niveau {
     private int idNiveau;
     private double hauteurSousPlafond;
-    private List<Appartement> appartements;
+    private List<Appartement> appartements = new ArrayList<>();
 
     public Niveau(int idNiveau, double hauteurSousPlafond) {
         this.idNiveau = idNiveau;
         this.hauteurSousPlafond = hauteurSousPlafond;
-        this.appartements = new ArrayList<>();
     }
 
-    public void ajouterAppartement(Appartement a) {
-        appartements.add(a);
-    }
-
-    public List<Appartement> getAppartements() {
-        return appartements;
-    }
-
-    public double getHauteurSousPlafond() {
-        return hauteurSousPlafond;
-    }
+    public void ajouterAppartement(Appartement a) { appartements.add(a); }
+    public List<Appartement> getAppartements() { return appartements; }
+    
+    public int getId() { return idNiveau; }
+    public double getHauteurSousPlafond() { return hauteurSousPlafond; }
 }

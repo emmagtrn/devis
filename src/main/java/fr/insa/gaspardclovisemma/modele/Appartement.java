@@ -5,18 +5,14 @@ import java.util.List;
 
 public class Appartement {
     private int idAppartement;
-    private List<Piece> pieces;
+    private List<Piece> pieces = new ArrayList<>();
 
     public Appartement(int idAppartement) {
         this.idAppartement = idAppartement;
-        this.pieces = new ArrayList<>();
     }
 
-    public void ajouterPiece(Piece p) {
-        pieces.add(p);
-    }
-
-    public List<Piece> getPieces() {
-        return pieces;
-    }
+    public void ajouterPiece(Piece p) { pieces.add(p); }
+    public List<Piece> getPieces() { return pieces; }
+    
+    public int getId() { return idAppartement; }
 }
