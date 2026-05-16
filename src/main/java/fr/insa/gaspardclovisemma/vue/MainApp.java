@@ -233,10 +233,18 @@ public class MainApp extends Application {
         catalogue.add(new Revetement(4, "Marbre", true, true, false, 97.85));
         catalogue.add(new Revetement(5, "Crepi", true, false, false, 67.80));
         catalogue.add(new Revetement(6, "Papier peint", true, false, false, 32.90));
-        catalogue.add(new Revetement(7, "Plaquettes", true, false, false, 15.20));
+        catalogue.add(new Revetement(7, "Plaquettes de parement", true, false, false, 15.20));
+        catalogue.add(new Revetement(8, "Peinture", true, false, true, 77.30));
+        catalogue.add(new Revetement(9, "Peinture", true, false, true, 29.90));
+        catalogue.add(new Revetement(10, "Carrelage", true, true, false, 89.45));
+        catalogue.add(new Revetement(11, "Lambris", true, true, false, 42.50));
+        catalogue.add(new Revetement(12, "Liege", true, false, false, 25.40));
         catalogue.add(new Revetement(13, "Parquet", false, true, false, 46.36));
         catalogue.add(new Revetement(14, "Vinyle Lino", false, true, false, 23.55));
         catalogue.add(new Revetement(15, "Moquette", false, true, false, 48.10));
+        catalogue.add(new Revetement(16, "Stratifie", false, true, false, 31.99));
+        catalogue.add(new Revetement(17, "Gazon", false, true, false, 17.95));
+        catalogue.add(new Revetement(18, "Liege", false, true, false, 33.90));
     }
 
     private void initialiserGrille(GraphicsContext gc) {
