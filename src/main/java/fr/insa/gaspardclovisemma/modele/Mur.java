@@ -1,38 +1,36 @@
 package fr.insa.gaspardclovisemma.modele;
 
-import fr.insa.gaspardclovisemma.materiaux.Ouverture;
 import fr.insa.gaspardclovisemma.materiaux.Revetement;
-import java.util.ArrayList;
-import java.util.List;
 
+// Le Mur est l'élément géométrique de base. Il se trace d'un point A (début) à un point B (fin).
 public class Mur {
+    // Les coins sont des objets contenant un X et un Y
     private Coin debut, fin;
-    private List<Ouverture> ouvertures = new ArrayList<>();
     
-    // NOUVEAU : Le mur sait maintenant quel est son revêtement !
+    // Le matériau posé sur ce mur spécifique (ex: Papier Peint)
     private Revetement revetement; 
 
+    // Constructeur
     public Mur(Coin debut, Coin fin) {
         this.debut = debut;
         this.fin = fin;
     }
 
+    // Getters
     public Coin getDebut() { return debut; }
     public Coin getFin() { return fin; }
 
-    // NOUVEAU : Les méthodes pour ajouter et lire le revêtement
+    // Setter et Getter pour le revêtement
     public void setRevetement(Revetement r) { this.revetement = r; }
     public Revetement getRevetement() { return revetement; }
 
-    public void ajouterOuverture(Ouverture o) { ouvertures.add(o); }
-
+    // Méthode mathématique : Calcule la longueur du mur avec le théorème de Pythagore : √((x2-x1)² + (y2-y1)²)
     public double getLongueur() {
         return Math.sqrt(Math.pow(fin.getX() - debut.getX(), 2) + Math.pow(fin.getY() - debut.getY(), 2));
     }
 
+    // Calcule la surface totale du mur (Longueur * Hauteur)
     public double calculerSurface(double hauteur) {
-        double surfaceBrute = getLongueur() * hauteur;
-        double surfaceOuvertures = ouvertures.stream().mapToDouble(Ouverture::getSurface).sum();
-        return surfaceBrute - surfaceOuvertures;
+        return getLongueur() * hauteur;
     }
 }
