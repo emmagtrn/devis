@@ -6,46 +6,50 @@ import java.io.IOException;
 
 public class GestionnaireFichier {
 
-    // Méthode qui crée un fichier texte et écrit l'arborescence complète du projet dedans
+    /**
+     * Exporte toute l'arborescence du projet dans un fichier texte lisible.
+     */
     public static void sauvegarderProjet(Batiment batiment, String cheminFichier) {
-        // Utilisation du "try-with-resources" : Garantit que le fichier sera correctement fermé et enregistré,
-        // même s'il y a un bug ou un plantage pendant l'écriture.
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(cheminFichier))) {
-            
-            // Écriture de l'en-tête du bâtiment
             bw.write("=== SAUVEGARDE DU BATIMENT : " + batiment.getId() + " ===\n");
             bw.write("Type : " + batiment.getType() + "\n\n");
 
-            // On descend l'arborescence étape par étape en ajoutant des espaces (indentation) pour que le fichier texte soit lisible par un humain
+            // On parcourt chaque niveau...
             for (Niveau n : batiment.getNiveaux()) {
                 bw.write(String.format("--- NIVEAU %d (Hauteur sous plafond: %.2fm) ---\n", n.getId(), n.getHauteurSousPlafond()));
                 
+                // ... puis chaque appartement ...
                 for (Appartement a : n.getAppartements()) {
                     bw.write("  APPARTEMENT " + a.getId() + "\n");
                     
+                    // ... puis chaque pièce ...
                     for (Piece p : a.getPieces()) {
                         bw.write("    PIECE " + p.getId() + "\n");
                         
-                        // Gestion de l'affichage si le revêtement n'est pas encore choisi (Brut)
+                        // Récupération des matériaux de la pièce
                         String sol = p.getRevetementSol() != null ? p.getRevetementSol().getNom() : "Brut";
                         String plafond = p.getRevetementPlafond() != null ? p.getRevetementPlafond().getNom() : "Brut";
                         bw.write("      Revêtement Sol : " + sol + "\n");
                         bw.write("      Revêtement Plafond : " + plafond + "\n");
                         
+                        // ... et enfin chaque mur !
                         int numMur = 1;
                         for (Mur m : p.getMurs()) {
-                            String rev = m.getRevetement() != null ? m.getRevetement().getNom() : "Brut";
-                            // Sauvegarde brute des coordonnées exactes (X1, Y1) et (X2, Y2) de chaque mur comme imposé par le sujet
-                            bw.write(String.format("      Mur %d : Coordonnées (%.2f, %.2f) à (%.2f, %.2f) - Revêtement : %s\n", 
-                                numMur++, m.getDebut().getX(), m.getDebut().getY(), m.getFin().getX(), m.getFin().getY(), rev));
+                            
+                            // On récupère proprement le Côté 1 et le Côté 2 du mur
+                            String revCote1 = m.getRevetementCote1() != null ? m.getRevetementCote1().getNom() : "Brut";
+                            String revCote2 = m.getRevetementCote2() != null ? m.getRevetementCote2().getNom() : "Brut";
+                            
+                            // On écrit la ligne avec les coordonnées, les deux faces et le nombre de trous
+                            bw.write(String.format("      Mur %d : (%.2f, %.2f) à (%.2f, %.2f) - Côté 1 : %s | Côté 2 : %s - %d Ouverture(s)\n", 
+                                numMur++, m.getDebut().getX(), m.getDebut().getY(), m.getFin().getX(), m.getFin().getY(), revCote1, revCote2, m.getOuvertures().size()));
                         }
                     }
                 }
             }
             System.out.println("Sauvegarde réussie avec succès !");
-
+            
         } catch (IOException e) {
-            // Bloc de secours au cas où le disque dur est plein ou protégé en écriture
             System.err.println("Erreur lors de la sauvegarde : " + e.getMessage());
         }
     }

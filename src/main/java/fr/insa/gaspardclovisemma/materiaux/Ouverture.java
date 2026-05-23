@@ -1,14 +1,15 @@
 package fr.insa.gaspardclovisemma.materiaux;
 
+// La classe Parent. On la met "abstract" car on ne crée jamais une "Ouverture" dans le vide. 
+// On créera toujours soit une Porte, soit une Fenêtre.
 public abstract class Ouverture {
-    protected double largeur, hauteur;
-    public double getSurface() { return largeur * hauteur; }
-}
+    
+    // Protected signifie que seules les classes "Enfants" (Porte et Fenetre) ont le droit de toucher à ces variables
+    protected double largeur;
+    protected double hauteur;
 
-class Porte extends Ouverture {
-    public Porte() { this.largeur = 0.9; this.hauteur = 2.1; }
-}
-
-class Fenetre extends Ouverture {
-    public Fenetre() { this.largeur = 1.2; this.hauteur = 1.2; }
+    // Méthode commune à tous les enfants : le calcul de la surface du trou
+    public double getSurface() {
+        return largeur * hauteur;
+    }
 }
