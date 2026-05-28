@@ -6,12 +6,7 @@ Type : Immeuble
     PIECE 1
       Revêtement Sol : Carrelage
       Revêtement Plafond : Peinture
-      Mur 1 : Coordonnées (0,00, 0,00) à (5,00, 0,00) - Revêtement : Papier peint
-      Mur 2 : Coordonnées (5,00, 5,00) à (5,00, 0,00) - Revêtement : Papier peint
-      Mur 3 : Coordonnées (5,00, 5,00) à (0,00, 0,00) - Revêtement : Papier peint
---- NIVEAU 2 (Hauteur sous plafond: 2,50m) ---
-  APPARTEMENT 1
-    PIECE 1
-      Revêtement Sol : Carrelage
-      Revêtement Plafond : Peinture
-      Mur 1 : Coordonnées (5,00, 5,00) à (0,00, 0,00) - Revêtement : Papier peint
+      Mur 1 : (0,00, 0,00) à (5,00, 0,00) - Côté 1 : Peinture | Côté 2 : Peinture - 0 Ouverture(s)
+      Mur 2 : (5,00, 0,00) à (5,00, 5,00) - Côté 1 : Peinture | Côté 2 : Peinture - 0 Ouverture(s)
+      Mur 3 : (5,00, 5,00) à (0,00, 5,00) - Côté 1 : Peinture | Côté 2 : Peinture - 0 Ouverture(s)
+      Mur 4 : (0,00, 5,00) à (0,00, 0,00) - Côté 1 : Carrelage | Côté 2 : Peinture - 1 Ouverture(s)

@@ -56,7 +56,7 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) {
         // On donne un titre à notre fenêtre
-        stage.setTitle("EstimaBat - Édition Professionnelle");
+        stage.setTitle("EstimaBat");
         
         // On lance notre méthode pour remplir le catalogue avec les 18 matériaux du sujet
         initialiserCatalogue();
@@ -399,32 +399,18 @@ public class MainApp extends Application {
         }
     }
 
+    
     /**
-     * Remplit la base de données brute avec les 18 matériaux du cahier des charges.
+     * Remplit la base de données brute en lisant le fichier texte externe.
      */
     private void initialiserCatalogue() {
-        catalogue.clear(); // On vide pour être sûr
-        // Paramètres : ID, Nom, Autorisé sur Mur?, Autorisé sur Sol?, Autorisé sur Plafond?, Prix unitaire
-        catalogue.add(new Revetement(1, "Peinture", true, false, true, 10.95));
-        catalogue.add(new Revetement(2, "Carrelage", true, true, false, 49.75));
-        catalogue.add(new Revetement(3, "Lambris", true, true, true, 50.60));
-        catalogue.add(new Revetement(4, "Marbre", true, true, false, 97.85));
-        catalogue.add(new Revetement(5, "Crepi", true, false, false, 67.80));
-        catalogue.add(new Revetement(6, "Papier peint", true, false, false, 32.90));
-        catalogue.add(new Revetement(7, "Plaquettes de parement", true, false, false, 15.20));
-        catalogue.add(new Revetement(8, "Peinture", true, false, true, 77.30));
-        catalogue.add(new Revetement(9, "Peinture", true, false, true, 29.90));
-        catalogue.add(new Revetement(10, "Carrelage", true, true, false, 89.45));
-        catalogue.add(new Revetement(11, "Lambris", true, true, false, 42.50));
-        catalogue.add(new Revetement(12, "Liege", true, false, false, 25.40));
-        catalogue.add(new Revetement(13, "Parquet", false, true, false, 46.36));
-        catalogue.add(new Revetement(14, "Vinyle Lino", false, true, false, 23.55));
-        catalogue.add(new Revetement(15, "Moquette", false, true, false, 48.10));
-        catalogue.add(new Revetement(16, "Stratifie", false, true, false, 31.99));
-        catalogue.add(new Revetement(17, "Gazon", false, true, false, 17.95));
-        catalogue.add(new Revetement(18, "Liege", false, true, false, 33.90));
+        // On enlève le .txt ici pour correspondre au vrai nom de ton fichier !
+        catalogue = GestionnaireCatalogue.chargerCatalogue("revetements"); 
+        
+        if (catalogue.isEmpty()) {
+            System.err.println("Attention : Le catalogue est vide.");
+        }
     }
-    
     // Le vrai point d'entrée du programme. "launch(args)" va automatiquement appeler notre méthode "start()".
     public static void main(String[] args) { launch(args); }
 }
