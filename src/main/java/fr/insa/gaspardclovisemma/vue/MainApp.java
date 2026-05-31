@@ -1,10 +1,8 @@
 package fr.insa.gaspardclovisemma.vue;
 
-// Importation des outils nécessaires pour faire fonctionner notre application.
-import fr.insa.gaspardclovisemma.materiaux.*; // Importe toutes nos classes de matériaux (Revetement, Porte, Fenetre...)
-import fr.insa.gaspardclovisemma.modele.*;   // Importe toutes nos classes d'architecture (Batiment, Mur, Piece...)
+import fr.insa.gaspardclovisemma.materiaux.*; 
+import fr.insa.gaspardclovisemma.modele.*;
 
-// Importations spécifiques à JavaFX (la bibliothèque qui permet de créer des fenêtres avec des boutons)
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -20,111 +18,79 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * La classe MainApp hérite de "Application". C'est obligatoire en JavaFX.
- * Cela indique à Java que ce fichier n'est pas un code classique, mais une fenêtre graphique.
- */
 public class MainApp extends Application {
-
-    // =========================================================================
-    // VARIABLES GLOBALES (Accessibles partout dans ce fichier)
-    // =========================================================================
     
-    // Création de l'objet de base. C'est notre "disque dur" en mémoire le temps que le programme tourne.
+    // --- MODELE DE DONNEES ---
+    // Racine du projet en mémoire
     private Batiment monBatiment = new Batiment("Batiment_GCE", "Immeuble");
     
-    // Une liste dynamique (ArrayList) qui va stocker les matériaux définis par le sujet.
+    // Liste des revêtements importés via le fichier texte
     private List<Revetement> catalogue = new ArrayList<>();
     
-    // Variables de mémorisation pour la fonction "Annuler". 
-    // Elles stockent temporairement le dernier mur créé et la pièce où il a été mis.
+    // Gestion du Undo (annulation du dernier mur)
     private Mur dernierMurAjoute;
     private Piece pieceDuDernierMur;
 
-    // ECHELLE : Constante (final) qui définit que 1 mètre = 40 pixels sur notre écran.
-    private final double ECHELLE = 40.0;
+    // --- PARAMETRES IHM ---
+    private final double ECHELLE = 40.0; // 1m = 40px
     
-    // Composants de l'interface qu'on déclare ici car plusieurs méthodes doivent pouvoir les modifier.
-    private Canvas canvasPlan; // L'objet qui permet de dessiner (notre feuille de papier)
-    private TextArea zoneDevis; // La grosse zone de texte où s'affiche la facture
-    private ComboBox<Integer> selecteurVueNiveau; // La liste déroulante pour choisir l'étage
+    // Composants globaux modifiables par les events
+    private Canvas canvasPlan; 
+    private TextArea zoneDevis; 
+    private ComboBox<Integer> selecteurVueNiveau; 
 
-    /**
-     * La méthode "start" est le moteur de JavaFX. C'est elle qui s'exécute au lancement.
-     * "Stage" représente la fenêtre de l'application (le cadre de la fenêtre Windows/Mac).
-     */
     @Override
     public void start(Stage stage) {
-        // On donne un titre à notre fenêtre
         stage.setTitle("EstimaBat");
         
-        // On lance notre méthode pour remplir le catalogue avec les 18 matériaux du sujet
+        // Chargement des données au démarrage
         initialiserCatalogue();
 
-        // =========================================================================
-        // PARTIE 1 : CONSTRUCTION DU CÔTÉ DROIT (LA ZONE DE DESSIN)
-        // =========================================================================
+        // ==========================================
+        // UI - ZONE DE DESSIN (DROITE)
+        // ==========================================
         
-        // VBox (Vertical Box) : Un conteneur invisible qui empile ses éléments de haut en bas.
-        // Le "10" est l'espacement (spacing) en pixels entre chaque élément empilé.
         VBox zoneCentrale = new VBox(10);
-        // Insets : Ajoute des marges à l'intérieur du conteneur (10 pixels sur les 4 côtés) pour aérer.
         zoneCentrale.setPadding(new Insets(10));
         
-        // HBox (Horizontal Box) : Un conteneur qui aligne ses éléments de gauche à droite.
         HBox enTeteVue = new HBox(15);
-        
-        // Label : Un simple texte affiché à l'écran, que l'utilisateur ne peut pas modifier.
         Label lblPlan = new Label("Visualisation du Plan 2D :");
-        // setStyle : Permet d'injecter du code CSS pour modifier l'apparence (taille, gras...).
         lblPlan.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
         
-        // ComboBox : Une liste déroulante. Le "<Integer>" signifie qu'elle contiendra des nombres entiers (les étages).
         selecteurVueNiveau = new ComboBox<>();
-        // On ajoute le titre et le menu déroulant dans notre boîte horizontale
         enTeteVue.getChildren().addAll(lblPlan, new Label("Étage affiché :"), selecteurVueNiveau);
         
-        // Canvas : Zone de dessin libre. Ici, on lui donne une largeur de 600px et une hauteur de 500px.
+        // Init du canvas et de son pinceau
         canvasPlan = new Canvas(600, 500);
-        // GraphicsContext : C'est le "stylo" associé à notre Canvas. Il permet de tracer des lignes, des carrés...
         GraphicsContext gc = canvasPlan.getGraphicsContext2D();
-        // On appelle notre méthode perso pour tracer une grille grise sur le Canvas
         initialiserGrille(gc);
         
-        // On ajoute l'en-tête (le menu) et le Canvas dans notre grande boîte verticale de droite
         zoneCentrale.getChildren().addAll(enTeteVue, canvasPlan);
 
-        // =========================================================================
-        // PARTIE 2 : CONSTRUCTION DU CÔTÉ GAUCHE (LE FORMULAIRE)
-        // =========================================================================
+        // ==========================================
+        // UI - FORMULAIRE (GAUCHE)
+        // ==========================================
         
-        // On crée la boîte verticale principale pour notre menu de gauche
         VBox formulaire = new VBox(12);
         formulaire.setPadding(new Insets(15));
-        formulaire.setPrefWidth(480); // On fixe la largeur à 480 pixels pour être sûr que tout le texte rentre.
-        // On met un fond gris clair (#f8f9fa) et une légère bordure grise (#dee2e6) pour séparer la zone.
+        formulaire.setPrefWidth(480); 
         formulaire.setStyle("-fx-background-color: #f8f9fa; -fx-border-color: #dee2e6;");
 
-        // --- SECTION A : Hiérarchie ---
-        // TextField : Une case blanche où l'utilisateur peut taper du texte. On y met une valeur par défaut.
+        // 1. Identifiants
         TextField txtNiveau = new TextField("0"); txtNiveau.setPrefWidth(40);
         TextField txtAppart = new TextField("1"); txtAppart.setPrefWidth(40);
         TextField txtPiece = new TextField("1"); txtPiece.setPrefWidth(40);
-        // On aligne horizontalement ces 3 cases avec leurs étiquettes (Labels)
         HBox boxHierarchie = new HBox(10, new Label("Niveau :"), txtNiveau, new Label("Appartement :"), txtAppart, new Label("Salle/Pièce :"), txtPiece);
 
-        // --- SECTION B : Matériaux ---
-        // Création des 4 listes déroulantes pour les revêtements
+        // 2. Choix des matériaux
         ComboBox<String> comboSol = new ComboBox<>();
         ComboBox<String> comboPlafond = new ComboBox<>();
         ComboBox<String> comboMurCote1 = new ComboBox<>();
         ComboBox<String> comboMurCote2 = new ComboBox<>(); 
         
-        // Boucle For-Each : Pour chaque "Revetement r" présent dans notre "catalogue"
+        // Tri des matériaux selon leur utilisation autorisée
         for (Revetement r : catalogue) {
-            // On prépare le texte qui s'affichera dans la liste (Nom + Prix)
             String choix = r.getNom() + " (" + r.getPrixM2() + " €/m²)";
-            // Logique de tri : Si le matériau est autorisé pour le sol, on l'ajoute à la liste du sol, etc.
             if (r.isPourSol()) comboSol.getItems().add(choix);
             if (r.isPourPlafond()) comboPlafond.getItems().add(choix);
             if (r.isPourMur()) {
@@ -132,21 +98,22 @@ public class MainApp extends Application {
                 comboMurCote2.getItems().add(choix);
             }
         }
-        // selectFirst() : On force la liste à sélectionner le 1er élément pour ne pas avoir une case vide
-        comboSol.getSelectionModel().selectFirst(); comboPlafond.getSelectionModel().selectFirst();
-        comboMurCote1.getSelectionModel().selectFirst(); comboMurCote2.getSelectionModel().selectFirst();
+        
+        // Sélections par défaut
+        comboSol.getSelectionModel().selectFirst(); 
+        comboPlafond.getSelectionModel().selectFirst();
+        comboMurCote1.getSelectionModel().selectFirst(); 
+        comboMurCote2.getSelectionModel().selectFirst();
 
-        // GridPane : Un tableau invisible (avec des lignes et des colonnes) pour bien aligner les éléments.
         GridPane gridDetails = new GridPane();
-        gridDetails.setHgap(10); // Espace horizontal entre les colonnes
-        gridDetails.setVgap(10); // Espace vertical entre les lignes
-        // addRow(numLigne, Colonne1, Colonne2) : Place les éléments dans le tableau
+        gridDetails.setHgap(10); 
+        gridDetails.setVgap(10); 
         gridDetails.addRow(0, new Label("Revêtement Sol Salle :"), comboSol);
         gridDetails.addRow(1, new Label("Revêtement Plafond Salle :"), comboPlafond);
         gridDetails.addRow(2, new Label("Revêtement Mur (Côté 1) :"), comboMurCote1);
         gridDetails.addRow(3, new Label("Revêtement Mur (Côté 2) :"), comboMurCote2);
 
-        // --- SECTION C : Coordonnées du mur ---
+        // 3. Géométrie et Ouvertures
         TextField txtX1 = new TextField("0"); txtX1.setPrefWidth(45);
         TextField txtY1 = new TextField("0"); txtY1.setPrefWidth(45);
         TextField txtX2 = new TextField("5"); txtX2.setPrefWidth(45);
@@ -157,30 +124,24 @@ public class MainApp extends Application {
         TextField txtFenetres = new TextField("0"); txtFenetres.setPrefWidth(45);
         HBox boxOuvertures = new HBox(15, new Label("Nombre Portes :"), txtPortes, new Label("Nombre Fenêtres :"), txtFenetres);
 
-        // --- SECTION D : Boutons ---
-        // Button : Un bouton cliquable standard
+        // 4. Boutons d'actions
         Button btnAjouter = new Button("Tracer ce Mur");
-        // On colore le bouton en vert avec un texte blanc gras via CSS
         btnAjouter.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;");
         
         Button btnAnnuler = new Button("✖ Supprimer Dernier Mur");
-        btnAnnuler.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white;"); // Rouge
-        // setDisable(true) : Rend le bouton gris et incliquable au lancement du programme
-        btnAnnuler.setDisable(true);
+        btnAnnuler.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white;");
+        btnAnnuler.setDisable(true); // Désactivé tant qu'il n'y a pas de mur à annuler
         HBox boxBoutonsMur = new HBox(10, btnAjouter, btnAnnuler);
 
         Button btnCalculerDevis = new Button("Calculer Devis");
         Button btnSauvegarder = new Button("Sauvegarder");
         HBox boxActions = new HBox(10, btnCalculerDevis, btnSauvegarder);
         
-        // TextArea : Une grosse case permettant d'afficher plusieurs lignes de texte (idéal pour le devis)
         zoneDevis = new TextArea(); 
-        // setEditable(false) : Empêche l'utilisateur d'écrire dedans au clavier
         zoneDevis.setEditable(false); 
-        zoneDevis.setPrefHeight(150); // Fixe la hauteur à 150 pixels
+        zoneDevis.setPrefHeight(150);
 
-        // Assemblage final : On ajoute tout dans la grande boîte "formulaire"
-        // Les "new Separator()" tracent une ligne horizontale fine pour délimiter les sections
+        // Assemblage du menu de gauche
         formulaire.getChildren().addAll(
             new Label("1. Emplacement de la structure"), boxHierarchie, new Separator(),
             new Label("2. Choix des matériaux (Par surfaces)"), gridDetails, new Separator(),
@@ -188,194 +149,171 @@ public class MainApp extends Application {
             boxBoutonsMur, new Separator(), boxActions, zoneDevis
         );
 
-        // =========================================================================
-        // PARTIE 3 : LOGIQUE INTERACTIVE (ÉVÉNEMENTS CLICS)
-        // =========================================================================
+        // ==========================================
+        // EVENTS ET LOGIQUE METIER
+        // ==========================================
 
-        // setOnAction(e -> ...) : Déclenche une action quand l'utilisateur interagit avec l'élément.
-        // Ici, si on change d'étage dans le menu déroulant, on appelle la méthode qui redessine le plan.
+        // Maj de l'affichage quand on change d'étage
         selecteurVueNiveau.setOnAction(e -> dessinerPlan(gc, selecteurVueNiveau.getValue()));
-
-        // Que se passe-t-il quand on clique sur "Tracer ce mur" ?
+        
         btnAjouter.setOnAction(e -> {
-            // Le bloc "try" tente d'exécuter le code. S'il y a une erreur (ex: on tape la lettre 'A' au lieu d'un chiffre), 
-            // il s'arrête et saute directement au bloc "catch" en bas, évitant que le logiciel ne crash.
             try {
-                // Integer.parseInt() : Convertit le texte tapé en nombre entier (int).
-                // .trim() : Enlève les espaces tapés par erreur avant ou après le chiffre.
                 int idNiv = Integer.parseInt(txtNiveau.getText().trim());
                 int idApp = Integer.parseInt(txtAppart.getText().trim());
                 int idPiece = Integer.parseInt(txtPiece.getText().trim());
                 
-                // Recherche ou création des éléments dans notre architecture (Poupées russes)
+                // On récupère ou on instancie les niveaux/apparts/pièces
                 Niveau niveau = trouverOuCreerNiveau(idNiv);
                 
-                // Si c'est un nouvel étage, on rajoute son numéro dans le menu déroulant de visualisation
+                // Maj du sélecteur si c'est un nouveau niveau
                 if (!selecteurVueNiveau.getItems().contains(idNiv)) {
                     selecteurVueNiveau.getItems().add(idNiv); 
-                    selecteurVueNiveau.getSelectionModel().select((Integer)idNiv); // On l'affiche direct
+                    selecteurVueNiveau.getSelectionModel().select((Integer)idNiv);
                 }
+                
                 Appartement appart = trouverOuCreerAppartement(niveau, idApp);
                 Piece piece = trouverOuCreerPiece(appart, idPiece);
 
-                // On applique les revêtements sélectionnés pour cette pièce
                 piece.setRevetementSol(trouverRevetement(comboSol.getValue()));
                 piece.setRevetementPlafond(trouverRevetement(comboPlafond.getValue()));
 
-                // Double.parseDouble() : Convertit le texte en nombre à virgule (double).
-                // .replace(",", ".") : Si l'utilisateur tape "2,5" on le transforme en "2.5" car Java exige des points.
+                // Parsing des coordonnées (gestion des virgules européennes)
                 double x1 = Double.parseDouble(txtX1.getText().replace(",", "."));
                 double y1 = Double.parseDouble(txtY1.getText().replace(",", "."));
                 double x2 = Double.parseDouble(txtX2.getText().replace(",", "."));
                 double y2 = Double.parseDouble(txtY2.getText().replace(",", "."));
 
-                // On crée notre objet Mur avec ses 2 points (Début et Fin)
+                // Création et configuration du mur
                 Mur nouveauMur = new Mur(new Coin(x1, y1), new Coin(x2, y2));
-                // On lui applique les revêtements de la liste déroulante
                 nouveauMur.setRevetementCote1(trouverRevetement(comboMurCote1.getValue()));
                 nouveauMur.setRevetementCote2(trouverRevetement(comboMurCote2.getValue()));
                 
-                // Traitement des ouvertures
+                // Ajout des ouvertures
                 int nbPortes = Integer.parseInt(txtPortes.getText().trim());
                 int nbFenetres = Integer.parseInt(txtFenetres.getText().trim());
-                // Boucle "For" : Répète l'action "i" fois pour créer le bon nombre de portes et fenêtres
                 for(int i=0; i<nbPortes; i++) nouveauMur.ajouterOuverture(new Porte());
                 for(int i=0; i<nbFenetres; i++) nouveauMur.ajouterOuverture(new Fenetre());
 
-                // On attache enfin ce mur terminé à la pièce correspondante
                 piece.ajouterMur(nouveauMur);
                 
-                // On met en mémoire ce mur pour que le bouton d'annulation sache quoi supprimer
+                // Sauvegarde de l'état pour la fonction Undo
                 dernierMurAjoute = nouveauMur;
                 pieceDuDernierMur = piece;
-                btnAnnuler.setDisable(false); // On réactive (dégrise) le bouton de suppression
+                btnAnnuler.setDisable(false); 
                 
-                // On demande au stylo de retracer l'écran pour afficher le nouveau mur
+                // Refresh IHM
                 dessinerPlan(gc, selecteurVueNiveau.getValue());
                 
-            } catch (Exception ex) {
-                // S'il y a eu une erreur de conversion de texte en chiffre, on affiche une "Alert" (Pop-up rouge)
+            } catch (NumberFormatException ex) {
+                // Gestion des mauvaises saisies
                 new Alert(Alert.AlertType.ERROR, "Données d'entrée erronées. Vérifiez les formats.").showAndWait();
             }
         });
 
-        // Que se passe-t-il quand on clique sur "Supprimer Dernier Mur" ?
+        // Action bouton Annuler
         btnAnnuler.setOnAction(e -> {
-            // On vérifie que la mémoire n'est pas vide
             if (dernierMurAjoute != null && pieceDuDernierMur != null) {
-                // On supprime physiquement l'objet mur de la liste des murs de la pièce
                 pieceDuDernierMur.getMurs().remove(dernierMurAjoute); 
-                dernierMurAjoute = null; // On vide la mémoire pour ne pas le supprimer deux fois
+                dernierMurAjoute = null; 
                 pieceDuDernierMur = null;
-                btnAnnuler.setDisable(true); // On re-grise le bouton
-                dessinerPlan(gc, selecteurVueNiveau.getValue()); // On met à jour le dessin
+                btnAnnuler.setDisable(true); 
+                dessinerPlan(gc, selecteurVueNiveau.getValue()); 
             }
         });
 
-        // Quand on clique sur Devis, on appelle notre classe "CalculateurDevis" et on met le résultat dans la zone de texte
+        // Actions globales (Devis / Export)
         btnCalculerDevis.setOnAction(e -> zoneDevis.setText(CalculateurDevis.genererFactureDetaillee(monBatiment)));
-        
-        // Quand on clique sur Sauvegarder, on appelle la classe "GestionnaireFichier"
         btnSauvegarder.setOnAction(e -> GestionnaireFichier.sauvegarderProjet(monBatiment, "sauvegarde_estimabat.txt"));
 
-        // =========================================================================
-        // PARTIE 4 : AFFICHAGE FINAL DE LA FENÊTRE
-        // =========================================================================
+        // ==========================================
+        // ASSEMBLAGE FINAL
+        // ==========================================
         
-        // BorderPane : C'est un conteneur principal très pratique qui a des emplacements (Gauche, Droite, Centre, Haut, Bas)
         BorderPane layout = new BorderPane();
-        layout.setLeft(formulaire); // On place notre menu vertical à gauche
-        layout.setCenter(zoneCentrale); // On place la zone de dessin au centre/droite
+        layout.setLeft(formulaire); 
+        layout.setCenter(zoneCentrale); 
         
-        // Scene : Contient notre BorderPane. C'est l'intérieur de la fenêtre (taille 1120x650)
         stage.setScene(new Scene(layout, 1120, 650));
-        // On affiche enfin le tout à l'écran !
         stage.show();
     }
     
-    // =========================================================================
-    // MÉTHODES UTILITAIRES (Pour fouiller dans les listes)
-    // =========================================================================
+    // ==========================================
+    // METHODES UTILITAIRES (Recherche/Creation)
+    // ==========================================
     
-    // Ces méthodes parcourent les listes avec une boucle For-Each pour trouver si l'élément (ex: l'étage 1) existe déjà.
-    // S'il n'existe pas, la méthode le crée avec "new", l'ajoute dans le bâtiment, et le renvoie.
     private Niveau trouverOuCreerNiveau(int id) {
         for (Niveau n : monBatiment.getNiveaux()) if (n.getId() == id) return n;
-        Niveau nouveau = new Niveau(id, 2.50); monBatiment.ajouterNiveau(nouveau); return nouveau;
+        Niveau nouveau = new Niveau(id, 2.50); 
+        monBatiment.ajouterNiveau(nouveau); 
+        return nouveau;
     }
     
     private Appartement trouverOuCreerAppartement(Niveau n, int id) {
         for (Appartement a : n.getAppartements()) if (a.getId() == id) return a;
-        Appartement nouveau = new Appartement(id); n.ajouterAppartement(nouveau); return nouveau;
+        Appartement nouveau = new Appartement(id); 
+        n.ajouterAppartement(nouveau); 
+        return nouveau;
     }
     
     private Piece trouverOuCreerPiece(Appartement a, int id) {
         for (Piece p : a.getPieces()) if (p.getId() == id) return p;
-        Piece nouvelle = new Piece(id); a.ajouterPiece(nouvelle); return nouvelle;
+        Piece nouvelle = new Piece(id); 
+        a.ajouterPiece(nouvelle); 
+        return nouvelle;
     }
     
-    // Permet de retrouver l'objet Revetement (avec son prix) juste à partir de son Nom affiché dans la liste déroulante
+    // Récupère l'objet Revetement correspondant au texte sélectionné dans la ComboBox
     private Revetement trouverRevetement(String choix) {
-        if (choix == null) return null; // Sécurité si la liste est vide
-        // startsWith : Vérifie si le choix commence par le nom du revêtement
+        if (choix == null) return null; 
         for (Revetement r : catalogue) if (choix.startsWith(r.getNom())) return r;
         return null;
     }
 
-    // =========================================================================
-    // MOTEUR DE DESSIN (CANVAS)
-    // =========================================================================
+    // ==========================================
+    // MOTEUR DE DESSIN 2D (CANVAS)
+    // ==========================================
 
-    /**
-     * Dessine une grille en arrière-plan
-     * @param gc Le pinceau de dessin
-     */
     private void initialiserGrille(GraphicsContext gc) {
-        gc.setStroke(Color.LIGHTGRAY); // Couleur de la ligne
-        gc.setLineWidth(0.5); // Épaisseur du trait
-        // Boucle : i augmente de la valeur de l'ECHELLE (40) à chaque tour
+        gc.setStroke(Color.LIGHTGRAY); 
+        gc.setLineWidth(0.5); 
         for(int i=0; i<600; i+=ECHELLE) gc.strokeLine(i, 0, i, 500); // Lignes verticales
         for(int i=0; i<500; i+=ECHELLE) gc.strokeLine(0, i, 600, i); // Lignes horizontales
     }
 
-    /**
-     * Méthode qui efface tout et redessine tous les murs du niveau actuel.
-     */
     private void dessinerPlan(GraphicsContext gc, Integer niveauAAfficher) {
-        // clearRect : Gomme la totalité du dessin existant
+        // Nettoyage complet du canvas avant redraw
         gc.clearRect(0, 0, 600, 500);
-        initialiserGrille(gc); // On retrace la grille par-dessus le vide
+        initialiserGrille(gc); 
         
-        if (niveauAAfficher == null) return; // Si aucun étage n'est choisi, on arrête ici.
+        if (niveauAAfficher == null) return; 
 
-        // On descend dans toute l'arborescence...
+        // Parcours du modèle
         for (Niveau n : monBatiment.getNiveaux()) {
             if (n.getId() == niveauAAfficher) {
                 for (Appartement a : n.getAppartements()) {
                     for (Piece p : a.getPieces()) {
                         
-                        // 1. DESSIN DES MURS DE LA PIÈCE
-                        gc.setLineWidth(4); // Murs épais (4 pixels)
+                        // 1. Dessin des murs
+                        gc.setLineWidth(4); 
                         for (Mur m : p.getMurs()) {
-                            // Code couleur
+                            // Highlight visuel du dernier mur ajouté
                             if (m == dernierMurAjoute) {
-                                gc.setStroke(Color.RED); // Surligne le dernier mur en rouge
+                                gc.setStroke(Color.RED); 
                             } else {
-                                gc.setStroke(Color.DARKSLATEGRAY); // Les autres murs sont gris foncé
+                                gc.setStroke(Color.DARKSLATEGRAY); 
                             }
                             
-                            // CONVERSION MATHÉMATIQUE (Valeur en Mètres * Échelle 40) + Marge 50 pixels
+                            // Map coordonnées logiques -> physiques (pixels)
                             double x1 = m.getDebut().getX() * ECHELLE + 50, y1 = m.getDebut().getY() * ECHELLE + 50;
                             double x2 = m.getFin().getX() * ECHELLE + 50, y2 = m.getFin().getY() * ECHELLE + 50;
-                            gc.strokeLine(x1, y1, x2, y2); // Ordre effectif de tracer la ligne
+                            gc.strokeLine(x1, y1, x2, y2); 
                         }
 
-                        // 2. ÉCRITURE DU NOM DE LA PIÈCE AU CENTRE
+                        // 2. Affichage des identifiants des pièces (calcul du centre de gravité)
                         if (!p.getMurs().isEmpty()) {
                             double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
                             double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
                             
-                            // On cherche le point le plus à gauche, à droite, en haut et en bas de la pièce
                             for (Mur m : p.getMurs()) {
                                 minX = Math.min(minX, Math.min(m.getDebut().getX(), m.getFin().getX()));
                                 maxX = Math.max(maxX, Math.max(m.getDebut().getX(), m.getFin().getX()));
@@ -383,14 +321,11 @@ public class MainApp extends Application {
                                 maxY = Math.max(maxY, Math.max(m.getDebut().getY(), m.getFin().getY()));
                             }
                             
-                            // On calcule le milieu mathématique de la pièce pour placer le texte
                             double centreX = ((minX + maxX) / 2) * ECHELLE + 50;
                             double centreY = ((minY + maxY) / 2) * ECHELLE + 50;
                             
-                            // Configuration de la police de texte (Bleu, Arial, Gras, taille 12)
                             gc.setFill(Color.BLUE);
                             gc.setFont(Font.font("Arial", FontWeight.BOLD, 12));
-                            // On écrit "Salle n°X" à l'emplacement calculé. (Le -22 et +4 servent à centrer le texte sur le point).
                             gc.fillText("Salle n°" + p.getId(), centreX - 22, centreY + 4);
                         }
                     }
@@ -399,18 +334,17 @@ public class MainApp extends Application {
         }
     }
 
-    
     /**
-     * Remplit la base de données brute en lisant le fichier texte externe.
+     * Initialisation du catalogue des matériaux via le fichier externe.
      */
     private void initialiserCatalogue() {
-        // On enlève le .txt ici pour correspondre au vrai nom de ton fichier !
         catalogue = GestionnaireCatalogue.chargerCatalogue("revetements"); 
         
         if (catalogue.isEmpty()) {
-            System.err.println("Attention : Le catalogue est vide.");
+            System.err.println("Avertissement : Le catalogue n'a pas pu être chargé (liste vide).");
         }
     }
-    // Le vrai point d'entrée du programme. "launch(args)" va automatiquement appeler notre méthode "start()".
+    
+    
     public static void main(String[] args) { launch(args); }
 }

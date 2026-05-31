@@ -2,7 +2,7 @@ package fr.insa.gaspardclovisemma.materiaux;
 
 // Représente un matériau du catalogue officiel (Carrelage, Peinture, etc.)
 public class Revetement {
-    // Toutes les colonnes de votre fichier texte sont représentées ici
+    
     private int idRevetement;
     private String designation; // Le nom affiché (ex: "Parquet")
     

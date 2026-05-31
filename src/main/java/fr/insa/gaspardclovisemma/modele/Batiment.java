@@ -3,7 +3,7 @@ package fr.insa.gaspardclovisemma.modele;
 import java.util.ArrayList;
 import java.util.List;
 
-// La classe Batiment est la racine de notre projet. Elle représente la structure globale.
+// La classe Batiment est la racine de notre projet car elle représente la structure globale.
 public class Batiment {
     // Attributs exigés par le cahier des charges
     private String idBatiment;   // L'identifiant du bâtiment (ex: "Batiment_A")

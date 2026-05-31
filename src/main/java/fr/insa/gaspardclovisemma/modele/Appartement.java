@@ -7,7 +7,7 @@ import java.util.List;
 public class Appartement {
     private int idAppartement;
     
-    // Suite de l'emboîtement : Un appartement contient une liste de pièces (Salon, Cuisine...)
+    // Suite de l'emboîtement : Un appartement contient une liste de pièces
     private List<Piece> pieces = new ArrayList<>();
 
     // Constructeur

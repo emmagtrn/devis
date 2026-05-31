@@ -4,11 +4,11 @@ import fr.insa.gaspardclovisemma.materiaux.Revetement;
 import java.util.ArrayList;
 import java.util.List;
 
-// La Pièce est l'élément qui contient physiquement les matériaux et les murs
+// La Pièce est l'élément qui contient les matériaux et les murs
 public class Piece {
-    private int idPiece; // Le numéro de la pièce (ex: 1 pour Salon)
+    private int idPiece; 
     
-    // Fin de l'emboîtement : Une pièce contient une liste de murs
+    // Une pièce contient une liste de murs
     private List<Mur> murs = new ArrayList<>();
     
     // Une pièce possède aussi ses propres matériaux pour le sol et le plafond

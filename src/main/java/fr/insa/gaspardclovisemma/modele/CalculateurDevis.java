@@ -27,7 +27,7 @@ public class CalculateurDevis {
                             surfacesParRevetement.put(r1, surfacesParRevetement.getOrDefault(r1, 0.0) + surfaceNette);
                         }
                         
-                        // Traitement du Côté 2 (sans condition d'extérieur !)
+                        // Traitement du Côté 2 
                         Revetement r2 = mur.getRevetementCote2();
                         if (r2 != null) {
                             surfacesParRevetement.put(r2, surfacesParRevetement.getOrDefault(r2, 0.0) + surfaceNette);

@@ -7,10 +7,10 @@ import java.util.List;
 public class Niveau {
     private int idNiveau; // Le numéro de l'étage
     
-    // Donnée cruciale du cahier des charges : la hauteur des murs est définie pour tout l'étage
+    // La hauteur des murs est définie pour tout l'étage
     private double hauteurSousPlafond; 
     
-    // Suite de l'emboîtement : Un étage contient une liste d'appartements
+    // Un étage contient une liste d'appartements
     private List<Appartement> appartements = new ArrayList<>();
 
     // Constructeur

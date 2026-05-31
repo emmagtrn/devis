@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * La classe Mur gère maintenant deux revêtements distincts pour ses deux faces,
+ * La classe Mur gère deux revêtements distincts pour ses deux faces,
  * peu importe sa position dans le bâtiment (cloison interne ou façade).
  */
 public class Mur {
-    // Les deux points cardinaux qui forment le segment de droite du mur
+    // Les deux points qui forment le segment de droite du mur
     private Coin debut, fin;
     
     // Les deux faces du mur possèdent chacune leur propre matériau
